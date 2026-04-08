@@ -1,9 +1,9 @@
-const { 
-  Client, 
-  GatewayIntentBits, 
-  REST, 
-  Routes, 
-  SlashCommandBuilder 
+const {
+  Client,
+  GatewayIntentBits,
+  REST,
+  Routes,
+  SlashCommandBuilder
 } = require('discord.js');
 
 const express = require('express');
@@ -16,7 +16,11 @@ app.listen(3000, () => console.log("Web server running"));
 
 // ===== DISCORD BOT =====
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds]
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ]
 });
 
 // ===== SLASH COMMANDS =====
@@ -47,25 +51,35 @@ client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
-// ===== MC BOT =====
+// ===== MINECRAFT BOT =====
 let mcBot = null;
 
 function startBot() {
   if (mcBot) return;
 
   mcBot = mineflayer.createBot({
-    host: "play.bananasmp.net", // change this
+    host: "YOUR_SERVER_IP", // CHANGE THIS
     port: 25565,
-    username: "AFKKIDD__"
+    username: "AFK_BOT"
   });
 
   mcBot.on('spawn', () => {
     console.log("MC bot joined");
 
-    // SMART AFK (camera move)
+    // SMART AFK (camera movement)
     setInterval(() => {
       mcBot.look(mcBot.entity.yaw + 0.5, mcBot.entity.pitch);
     }, 8000);
+  });
+
+  // ===== MC → DISCORD CHAT =====
+  mcBot.on('chat', (username, message) => {
+    if (username === mcBot.username) return;
+
+    const channel = client.channels.cache.get(process.env.CHANNEL_ID);
+    if (channel) {
+      channel.send(`💬 ${username}: ${message}`);
+    }
   });
 
   mcBot.on('end', () => {
@@ -77,12 +91,21 @@ function startBot() {
   mcBot.on('error', err => console.log(err));
 }
 
-// ===== SLASH HANDLER =====
+// ===== DISCORD → MC CHAT =====
+client.on('messageCreate', msg => {
+  if (msg.author.bot) return;
+
+  if (mcBot) {
+    mcBot.chat(msg.content);
+  }
+});
+
+// ===== SLASH COMMAND HANDLER =====
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
   if (interaction.commandName === 'ping') {
-    await interaction.reply('PONG');
+    await interaction.reply('🏓 Pong!');
   }
 
   if (interaction.commandName === 'status') {
