@@ -34,7 +34,7 @@ const commands = [
 
 const rest = new REST({ version: '10' }).setToken(TOKEN);
 
-// ===== REGISTER COMMANDS (ON READY) =====
+// ===== READY EVENT =====
 client.once('ready', async () => {
   console.log(`Logged in as ${client.user.tag}`);
 
@@ -56,34 +56,48 @@ let mcBot = null;
 function startBot() {
   if (mcBot) return;
 
+  console.log("🚀 Starting MC bot...");
+
   mcBot = mineflayer.createBot({
-    host: "play.bananasmp.net", // CHANGE THIS
+    host: "play.bananasmp.net",
     port: 25565,
-    username: "AFKKID__"
+    username: "AFK_BOT",
+    version: "1.20.1" // 🔥 IMPORTANT
+  });
+
+  mcBot.on('login', () => {
+    console.log("✅ Logged into server");
   });
 
   mcBot.on('spawn', () => {
-    console.log("✅ MC bot joined");
+    console.log("✅ FULLY JOINED WORLD");
 
+    // Anti AFK (camera move)
     setInterval(() => {
       mcBot.look(mcBot.entity.yaw + 0.5, mcBot.entity.pitch);
     }, 8000);
   });
 
-  // ===== MC → DISCORD CHAT =====
-  mcBot.on('chat', (username, message) => {
-    if (username === mcBot.username) return;
+  // ===== MC CHAT → DISCORD =====
+  mcBot.on('messagestr', (message) => {
+    console.log("MC CHAT:", message);
 
     const channel = client.channels.cache.get(CHANNEL_ID);
     if (channel) {
-      channel.send(`💬 ${username}: ${message}`);
+      channel.send(`💬 ${message}`);
     }
   });
 
-  mcBot.on('error', err => console.log("MC ERROR:", err));
+  mcBot.on('kicked', reason => {
+    console.log("❌ KICKED:", reason);
+  });
+
+  mcBot.on('error', err => {
+    console.log("❌ ERROR:", err);
+  });
 
   mcBot.on('end', () => {
-    console.log("MC reconnecting...");
+    console.log("🔁 Reconnecting...");
     mcBot = null;
     setTimeout(startBot, 5000);
   });
