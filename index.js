@@ -58,9 +58,9 @@ function startBot() {
   if (mcBot) return;
 
   mcBot = mineflayer.createBot({
-    host: "YOUR_SERVER_IP", // CHANGE THIS
+    host: "play.bananasmp.net", // CHANGE THIS
     port: 25565,
-    username: "AFK_BOT"
+    username: "AFKKID__"
   });
 
   mcBot.on('spawn', () => {
